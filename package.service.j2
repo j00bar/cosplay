@@ -1,0 +1,11 @@
+[Unit]
+Description={{ summary }}
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=podman run {{ volume_args }} {{ network_args }} {{ environment_args }} {{ package }}:{{ version }}
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

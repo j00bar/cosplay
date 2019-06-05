@@ -1,0 +1,27 @@
+Name:    {{ package|lower }}-ubi
+Version: {{ version }}
+Release: {{ version_datestring }}
+Summary: Base container image for {{ package }}
+BuildRequires: podman, skopeo
+Requires: podman, skopeo
+License: Various
+
+%description
+The {{ package }} base container image, packaged in an RPM.
+
+%install
+/usr/bin/mkdir -p %{buildroot}/var/cosplay
+/usr/bin/skopeo copy containers-storage:{{ package_host }}/{{ package|lower }}:{{ version }} dir:%{buildroot}/var/cosplay/{{ package|lower }}-{{ version }}
+
+%files
+/var/cosplay/{{ package|lower }}-{{ version }}
+
+%pre
+
+%post
+/usr/bin/skopeo copy dir:/var/cosplay/{{ package|lower }}-{{ version }} containers-storage:{{ package|lower }}:{{ version }}
+
+%postun
+/usr/bin/podman rmi {{ package|lower }}:{{ version}}
+
+%changelog

@@ -1,0 +1,36 @@
+Name:    {{ package|lower }}
+Version: {{ version }}
+Release: {{ version_datestring }}
+Summary: {{ summary }}
+BuildRequires: podman, skopeo, python3{% if service %}, systemd{% endif %}
+Requires: podman, skopeo, {{ base }}-ubi == {{ base_version }}-{{ base_version_datestring }}
+License: Unknown
+
+%description
+The {{ package }} container, packaged in an RPM.
+
+%install
+
+/usr/bin/mkdir -p %{buildroot}/var/cosplay
+/usr/bin/skopeo copy containers-storage:{{ package_host }}/{{ package|lower }}:{{ version }} dir:%{buildroot}/var/cosplay/{{ package|lower }}-{{ version }}
+/usr/bin/python3 {{ cosplay_dir }}/slimfast.py %{buildroot}/var/cosplay/{{ package|lower }}-{{ version }} {{ base }}:{{ base_version }}
+{% if service %}
+/usr/bin/install -d -m755 %{buildroot}%{_unitdir}
+/usr/bin/install -m644 {{ temp_dir }}/{{ package }}.service %{buildroot}%{_unitdir}
+{% endif %}
+
+%files
+/var/cosplay/{{ package|lower }}-{{ version }}
+{% if service %}
+%{_unitdir}/{{ package }}.service
+{% endif %}
+
+%pre
+
+%post
+/usr/bin/skopeo copy dir:/var/cosplay/{{ package|lower }}-{{ version }} containers-storage:{{ package|lower }}:{{ version }}
+
+%postun
+/usr/bin/podman rmi {{ package|lower }}:{{ version }}
+
+%changelog
